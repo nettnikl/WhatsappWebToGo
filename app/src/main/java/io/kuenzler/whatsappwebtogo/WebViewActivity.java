@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -50,7 +51,7 @@ import com.google.android.material.snackbar.Snackbar;
 import java.util.Arrays;
 import java.util.Locale;
 
-public class WebviewActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class WebViewActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final String CHROME_FULL = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36";
     private static final String USER_AGENT = CHROME_FULL;
@@ -64,10 +65,10 @@ public class WebviewActivity extends AppCompatActivity implements NavigationView
             + "/" + WORLD_ICON + "/"
             + Locale.getDefault().getLanguage();
 
-    private static final int FILECHOOSER_RESULTCODE        = 200;
-    private static final int CAMERA_PERMISSION_RESULTCODE  = 201;
-    private static final int AUDIO_PERMISSION_RESULTCODE   = 202;
-    private static final int VIDEO_PERMISSION_RESULTCODE   = 203;
+    private static final int FILECHOOSER_RESULTCODE = 200;
+    private static final int CAMERA_PERMISSION_RESULTCODE = 201;
+    private static final int AUDIO_PERMISSION_RESULTCODE = 202;
+    private static final int VIDEO_PERMISSION_RESULTCODE = 203;
     private static final int STORAGE_PERMISSION_RESULTCODE = 204;
 
     private static final String DEBUG_TAG = "WAWEBTOGO";
@@ -82,6 +83,7 @@ public class WebviewActivity extends AppCompatActivity implements NavigationView
     private long mLastBackClick = 0;
 
     boolean mKeyboardEnabled = false;
+    boolean mDarkMode;
 
     private ValueCallback<Uri[]> mUploadMessage;
     private PermissionRequest mCurrentPermissionRequest;
@@ -106,6 +108,7 @@ public class WebviewActivity extends AppCompatActivity implements NavigationView
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         mSharedPrefs = this.getSharedPreferences(this.getPackageName(), Context.MODE_PRIVATE);
+        mDarkMode = mSharedPrefs.getBoolean("darkMode", false);
 
         mMainView = findViewById(R.id.layout);
 
@@ -192,15 +195,27 @@ public class WebviewActivity extends AppCompatActivity implements NavigationView
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
                 mUploadMessage = filePathCallback;
                 Intent chooserIntent = fileChooserParams.createIntent();
-                WebviewActivity.this.startActivityForResult(chooserIntent, FILECHOOSER_RESULTCODE);
+                WebViewActivity.this.startActivityForResult(chooserIntent, FILECHOOSER_RESULTCODE);
                 return true;
             }
         });
 
         mWebView.setWebViewClient(new WebViewClient() {
 
+            @Override
+            public void onPageStarted(WebView webView, String url, Bitmap favicon) {
+                if (mDarkMode) {
+                    addDarkMode(webView);
+                }
+            }
+
+            @Override
             public void onPageFinished(WebView view, String url) {
                 view.scrollTo(0, 0);
+
+                if (mDarkMode) {
+                    addDarkMode(view);
+                }
             }
 
             @Override
@@ -230,7 +245,7 @@ public class WebviewActivity extends AppCompatActivity implements NavigationView
         });
 
         if (savedInstanceState == null) {
-            loadWhatsapp();
+            loadWhatsApp();
         } else {
             Log.d(DEBUG_TAG, "savedInstanceState is present");
         }
@@ -423,6 +438,14 @@ public class WebviewActivity extends AppCompatActivity implements NavigationView
         }
     }
 
+    private void toggleDarkMode() {
+        boolean currentState = mSharedPrefs.getBoolean("darkMode", false);
+        mSharedPrefs.edit().putBoolean("darkMode", !currentState).apply();
+
+        Log.d(DEBUG_TAG, "Dark Mode Enabled: " + !currentState);
+        restartApp();
+    }
+
     private void showVersionInfo() {
         int lastShownVersionCode = 0;
         int currentVersionCode = 0;
@@ -474,9 +497,25 @@ public class WebviewActivity extends AppCompatActivity implements NavigationView
         }
     }
 
-    private void loadWhatsapp() {
+    private void loadWhatsApp() {
         mWebView.getSettings().setUserAgentString(USER_AGENT);
         mWebView.loadUrl(WHATSAPP_WEB_URL);
+    }
+
+    public void addDarkMode(final WebView mWebView) {
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setNavigationBarColor(Color.BLACK);
+        }
+
+        mWebView.loadUrl("javascript:(" +
+                "function(){ " +
+                "try {  document.body.classList.add('dark') } catch(err) { }" +
+                "})()");
+    }
+
+    private void restartApp() {
+        startActivity(new Intent(getApplicationContext(), MainActivity.class));
+        this.finish();
     }
 
     @Override
@@ -485,7 +524,6 @@ public class WebviewActivity extends AppCompatActivity implements NavigationView
         int id = item.getItemId();
 
         if (id == R.id.nav_hide) {
-            MenuItem view = findViewById(R.id.nav_hide);
             if (getSupportActionBar().isShowing()) {
                 showSnackbar("hiding... swipe right to show navigation bar");
                 getSupportActionBar().hide();
@@ -496,18 +534,14 @@ public class WebviewActivity extends AppCompatActivity implements NavigationView
             showSnackbar("logging out...");
             mWebView.loadUrl("javascript:localStorage.clear()");
             WebStorage.getInstance().deleteAllData();
-            loadWhatsapp();
-        } else if (id == R.id.nav_new) {
-            //showToast("nav_new");
-        } else if (id == R.id.nav_switch) {
-            //showToast("nav_switch");
-        } else if (id == R.id.nav_settings) {
-            //showToast("nav_settings");
+            loadWhatsApp();
         } else if (id == R.id.nav_about) {
             showAbout();
         } else if (id == R.id.nav_reload) {
             showSnackbar("reloading...");
-            loadWhatsapp();
+            loadWhatsApp();
+        } else if (id == R.id.nav_dark_mode) {
+            toggleDarkMode();
         }
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
