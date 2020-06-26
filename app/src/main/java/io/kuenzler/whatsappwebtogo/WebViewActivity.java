@@ -10,10 +10,14 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
+import android.text.SpannableString;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -33,6 +37,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebStorage;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -202,15 +207,24 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
 
         mWebView.setWebViewClient(new WebViewClient() {
 
-            @Override
-            public void onPageStarted(WebView webView, String url, Bitmap favicon) {
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
                 if (mDarkMode) {
-                    addDarkMode(webView);
+                    addDarkMode(view);
+                }
+            }
+
+            @Override
+            public void onPageCommitVisible(WebView view, String url) {
+                super.onPageCommitVisible(view, url);
+                if (mDarkMode) {
+                    addDarkMode(view);
                 }
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
                 view.scrollTo(0, 0);
 
                 if (mDarkMode) {
@@ -259,7 +273,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         mWebView.onResume();
 
         mKeyboardEnabled = mSharedPrefs.getBoolean("keyboardEnabled", true);
-        setNavbarEnabled(mSharedPrefs.getBoolean("navbarEnabled", true));
+        setAppbarEnabled(mSharedPrefs.getBoolean("appbarEnabled", true));
 
         setKeyboardEnabled(mKeyboardEnabled);
 
@@ -376,21 +390,20 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
     }
 
     private void showPopupDialog(String message) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(message)
+        final SpannableString msg = new SpannableString(message);
+        Linkify.addLinks(msg, Linkify.WEB_URLS|Linkify.EMAIL_ADDRESSES);
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(msg)
                 .setCancelable(false)
                 .setPositiveButton("Ok", null);
         AlertDialog alert = builder.create();
         alert.show();
+        ((TextView) alert.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
     }
 
-    private void showPopupDialog(int id) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(id)
-                .setCancelable(false)
-                .setPositiveButton("Ok", null);
-        AlertDialog alert = builder.create();
-        alert.show();
+    private void showPopupDialog(int resId) {
+       showPopupDialog(getString(resId));
     }
 
     private void showToast(String msg) {
@@ -426,15 +439,15 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         mSharedPrefs.edit().putBoolean("keyboardEnabled", enable).apply();
     }
 
-    private void setNavbarEnabled(boolean enable) {
-        ActionBar navbar = getSupportActionBar();
-        if (navbar != null) {
+    private void setAppbarEnabled(boolean enable) {
+        ActionBar actionBar= getSupportActionBar();
+        if (actionBar != null) {
             if (enable) {
-                navbar.show();
+                actionBar.show();
             } else {
-                navbar.hide();
+                actionBar.hide();
             }
-            mSharedPrefs.edit().putBoolean("navbarEnabled", enable).apply();
+            mSharedPrefs.edit().putBoolean("appbarEnabled", enable).apply();
         }
     }
 
@@ -505,6 +518,9 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
     public void addDarkMode(final WebView mWebView) {
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setNavigationBarColor(Color.BLACK);
+            getWindow().setStatusBarColor(Color.BLACK);
+            try{ getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.BLACK));
+            } catch (NullPointerException ignored) {}
         }
 
         mWebView.loadUrl("javascript:(" +
@@ -523,12 +539,13 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_hide) {
+        if (id == R.id.appbar_hide) {
+            MenuItem view = findViewById(R.id.appbar_hide);
             if (getSupportActionBar().isShowing()) {
                 showSnackbar("hiding... swipe right to show navigation bar");
-                getSupportActionBar().hide();
+                setAppbarEnabled(false);
             } else {
-                getSupportActionBar().show();
+                setAppbarEnabled(true);
             }
         } else if (id == R.id.nav_logout) {
             showSnackbar("logging out...");
