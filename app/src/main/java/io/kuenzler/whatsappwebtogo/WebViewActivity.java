@@ -391,7 +391,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
 
     private void showPopupDialog(String message) {
         final SpannableString msg = new SpannableString(message);
-        Linkify.addLinks(msg, Linkify.WEB_URLS|Linkify.EMAIL_ADDRESSES);
+        Linkify.addLinks(msg, Linkify.WEB_URLS | Linkify.EMAIL_ADDRESSES);
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(msg)
@@ -403,7 +403,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
     }
 
     private void showPopupDialog(int resId) {
-       showPopupDialog(getString(resId));
+        showPopupDialog(getString(resId));
     }
 
     private void showToast(String msg) {
@@ -440,7 +440,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
     }
 
     private void setAppbarEnabled(boolean enable) {
-        ActionBar actionBar= getSupportActionBar();
+        ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             if (enable) {
                 actionBar.show();
@@ -519,8 +519,11 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setNavigationBarColor(Color.BLACK);
             getWindow().setStatusBarColor(Color.BLACK);
-            try{ getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.BLACK));
-            } catch (NullPointerException ignored) {}
+
+            try {
+                getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.BLACK));
+            } catch (Exception ignored) {
+            }
         }
 
         mWebView.loadUrl("javascript:(" +
