@@ -229,7 +229,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
                 Uri url = request.getUrl();
                 Log.d(DEBUG_TAG, url.toString());
 
-                if ("web.whatsapp.com".equals(url.getHost())) {
+                if (request.getUrl().getHost().equals("web.whatsapp.com")) {
                     // whatsapp web request -> fine
                     return super.shouldOverrideUrlLoading(view, request);
                 } else {
