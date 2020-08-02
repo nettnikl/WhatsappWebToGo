@@ -234,14 +234,14 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                final String url = request.getUrl().toString();
-                Log.d(DEBUG_TAG, url);
+                Uri url = request.getUrl();
+                Log.d(DEBUG_TAG, url.toString());
 
-                if (url.contains("web.whatsapp.com")) {
+                if (url.getHost().equals("web.whatsapp.com")) {
                     // whatsapp web request -> fine
                     return super.shouldOverrideUrlLoading(view, request);
                 } else {
-                    Intent intent = new Intent(Intent.ACTION_VIEW, request.getUrl());
+                    Intent intent = new Intent(Intent.ACTION_VIEW, url);
                     startActivity(intent);
                     return true;
                 }
@@ -475,7 +475,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
             return;
         }
         if (lastShownVersionCode < currentVersionCode) {
-            showPopupDialog(R.string.versionInfo);
+            showPopupDialog(R.string.versionInfoText);
         } else {
             return;
         }
@@ -484,7 +484,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
 
     private void showIntroInfo() {
         if (!mSharedPrefs.getBoolean("introShown", false)) {
-            showPopupDialog(R.string.introInfo);
+            showPopupDialog(R.string.introInfoText);
         } else {
             return;
         }
@@ -492,7 +492,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
     }
 
     private void showAbout() {
-        showPopupDialog(R.string.about);
+        showPopupDialog(R.string.aboutText);
     }
 
     @Override
