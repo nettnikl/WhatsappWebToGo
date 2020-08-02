@@ -106,6 +106,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
+        addDarkMode(mWebView);
 
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -153,6 +154,11 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         mWebView.setScrollbarFadingEnabled(true);
 
         mWebView.setWebChromeClient(new WebChromeClient() {
+
+            @Override
+            public void onProgressChanged(WebView view, int progress) {
+                addDarkMode(view);
+            }
 
             @Override
             public boolean onCreateWindow(WebView view, boolean dialog, boolean userGesture, Message resultMsg) {
@@ -209,27 +215,17 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
 
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
-                if (mDarkMode) {
-                    addDarkMode(view);
-                }
             }
 
             @Override
             public void onPageCommitVisible(WebView view, String url) {
                 super.onPageCommitVisible(view, url);
-                if (mDarkMode) {
-                    addDarkMode(view);
-                }
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 view.scrollTo(0, 0);
-
-                if (mDarkMode) {
-                    addDarkMode(view);
-                }
             }
 
             @Override
@@ -526,10 +522,12 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
             }
         }
 
-        mWebView.loadUrl("javascript:(" +
-                "function(){ " +
-                "try {  document.body.classList.add('dark') } catch(err) { }" +
-                "})()");
+        if (mWebView != null) {
+            mWebView.loadUrl("javascript:(" +
+                    "function(){ " +
+                    "try {  document.body.classList.add('dark') } catch(err) { }" +
+                    "})()");
+        }
     }
 
     private void restartApp() {
