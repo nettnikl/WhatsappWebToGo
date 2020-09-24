@@ -1,2 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingTranslation">
+    <string name="js_dark_mode_enable">javascript:document.body.classList.remove(\'light\');document.body.classList.add(\'dark\');</string>
+    <string name="js_dark_mode_disable">javascript:document.body.classList.remove(\'dark\');document.body.classList.add(\'light\');</string>
+    <string name="js_clear_cookies">javascript:localStorage.clear()</string>
+</resources>

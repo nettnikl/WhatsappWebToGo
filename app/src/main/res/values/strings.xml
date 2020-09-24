@@ -16,4 +16,9 @@
     <string name="appbar_button_scroll_left">Scroll left</string>
     <string name="appbar_title_scroll_right">Scroll right</string>
     <string name="appbar_button_toggle_keyboard">Toggle keyboard</string>
+    <string name="log_out_snackbar">Logging out…</string>
+    <string name="reload_snackbar">Reloading…</string>
+    <string name="keyboard_unlock_snackbar">Unblocking keyboard…</string>
+    <string name="keyboard_lock_snackbar">Blocking keyboard…</string>
+    <string name="hide_appbar_snackbar">hiding… swipe right to show navigation bar</string>
 </resources>

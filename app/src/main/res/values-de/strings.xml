@@ -10,4 +10,9 @@
     <string name="appbar_button_scroll_left">nach links scrollen</string>
     <string name="appbar_title_scroll_right">nach rechts scrollen</string>
     <string name="appbar_button_toggle_keyboard">Tastatur umschalten</string>
+    <string name="log_out_snackbar">Abmelden...</string>
+    <string name="reload_snackbar">Neu laden...</string>
+    <string name="keyboard_unlock_snackbar">Tastatur freischalten...</string>
+    <string name="hide_appbar_snackbar">Verstecke NavBar... Nach rechts wischen zum anzeigen</string>
+    <string name="keyboard_lock_snackbar">Tastatur fixieren...</string>
 </resources>

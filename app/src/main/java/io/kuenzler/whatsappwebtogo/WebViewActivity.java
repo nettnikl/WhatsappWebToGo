@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
@@ -425,11 +424,11 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
         if (enable && mMainView.getDescendantFocusability() == ViewGroup.FOCUS_BLOCK_DESCENDANTS) {
             mMainView.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
-            showSnackbar("Unblocking keyboard...");
+            showSnackbar(getString(R.string.keyboard_unlock_snackbar));
         } else if (!enable) {
             mMainView.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
             mWebView.getRootView().requestFocus();
-            showSnackbar("Blocking keyboard...");
+            showSnackbar(getString(R.string.keyboard_lock_snackbar));
             assert inputMethodManager != null;
             assert activity.getCurrentFocus() != null;
             inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
@@ -441,7 +440,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         ActionBar supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
             if (supportActionBar.isShowing()) {
-                showSnackbar("hiding... swipe right to show navigation bar");
+                showSnackbar(getString(R.string.hide_appbar_snackbar));
                 setAppbarEnabled(false);
             } else {
                 setAppbarEnabled(true);
@@ -478,13 +477,9 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
 
         String js;
         if (darkMode) {
-            js = "javascript:" +
-                    "document.body.classList.remove('light');" +
-                    "document.body.classList.add('dark');";
+            js = getString(R.string.js_dark_mode_enable);
         } else {
-            js = "javascript:" +
-                    "document.body.classList.remove('dark');" +
-                    "document.body.classList.add('light');";
+            js = getString(R.string.js_dark_mode_disable);
         }
         mWebView.evaluateJavascript(js, s -> {});
 
@@ -562,14 +557,14 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         if (id == R.id.appbar_hide) {
             toggleAppbarEnabled();
         } else if (id == R.id.nav_logout) {
-            showSnackbar("logging out...");
-            mWebView.loadUrl("javascript:localStorage.clear()");
+            showSnackbar(getString(R.string.log_out_snackbar));
+            mWebView.loadUrl(getString(R.string.js_clear_cookies));
             WebStorage.getInstance().deleteAllData();
             loadWhatsApp();
         } else if (id == R.id.nav_about) {
             showAbout();
         } else if (id == R.id.nav_reload) {
-            showSnackbar("reloading...");
+            showSnackbar(getString(R.string.reload_snackbar));
             loadWhatsApp();
         } else if (id == R.id.nav_dark_mode) {
             toggleDarkMode();
