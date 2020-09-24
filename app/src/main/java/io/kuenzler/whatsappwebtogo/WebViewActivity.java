@@ -42,6 +42,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.ColorInt;
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
@@ -89,6 +90,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
 
     private WebView mWebView;
     private ViewGroup mMainView;
+    private Menu optionsMenu;
 
     private long mLastBackClick = 0;
 
@@ -97,7 +99,6 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
 
     private ValueCallback<Uri[]> mUploadMessage;
     private PermissionRequest mCurrentPermissionRequest;
-
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -283,6 +284,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.action_bar, menu);
+        this.optionsMenu = menu;
         return true;
     }
 
@@ -413,6 +415,9 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
 
     private void toggleKeyboard() {
         setKeyboardEnabled(!mKeyboardEnabled);
+        MenuItem item = optionsMenu.findItem(R.id.toggle_keyboard);
+        @DrawableRes int icon = mKeyboardEnabled ? R.drawable.ic_baseline_keyboard_hide : R.drawable.ic_baseline_keyboard;
+        item.setIcon(icon);
     }
 
     private void setKeyboardEnabled(final boolean enable) {
@@ -421,7 +426,6 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         if (enable && mMainView.getDescendantFocusability() == ViewGroup.FOCUS_BLOCK_DESCENDANTS) {
             mMainView.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
             showSnackbar("Unblocking keyboard...");
-            //inputMethodManager.showSoftInputFromInputMethod(activity.getCurrentFocus().getWindowToken(), 0);
         } else if (!enable) {
             mMainView.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
             mWebView.getRootView().requestFocus();

@@ -20,7 +20,7 @@
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/toggle_keyboard"
-        android:icon="@drawable/ic_baseline_keyboard_hide"
+        android:icon="@drawable/ic_baseline_keyboard"
         android:orderInCategory="100"
         android:title="@string/appbar_button_toggle_keyboard"
         android:visible="true"
