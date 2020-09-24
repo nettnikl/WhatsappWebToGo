@@ -1,6 +1,7 @@
 package io.kuenzler.whatsappwebtogo;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -40,6 +41,7 @@ import android.webkit.WebViewClient;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -66,6 +68,8 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
     private static final String[] VIDEO_PERMISSION = {CAMERA_PERMISSION, AUDIO_PERMISSION};
 
     private static final String WORLD_ICON = "\uD83C\uDF10";
+    @SuppressLint("ConstantLocale")
+    //TODO react to language changes during runtime by changing this url and reloading the page
     private static final String WHATSAPP_WEB_URL = "https://web.whatsapp.com"
             + "/" + WORLD_ICON + "/"
             + Locale.getDefault().getLanguage();
@@ -94,6 +98,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
     private PermissionRequest mCurrentPermissionRequest;
 
 
+    @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -148,7 +153,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         mWebView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         mWebView.getSettings().setNeedInitialFocus(false);
         mWebView.getSettings().setGeolocationEnabled(true);
-        mWebView.getSettings().setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
+        mWebView.getSettings().setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
 
         mWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
         mWebView.setScrollbarFadingEnabled(true);
@@ -233,7 +238,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
                 Uri url = request.getUrl();
                 Log.d(DEBUG_TAG, url.toString());
 
-                if (url.getHost().equals("web.whatsapp.com")) {
+                if ("web.whatsapp.com".equals(url.getHost())) {
                     // whatsapp web request -> fine
                     return super.shouldOverrideUrlLoading(view, request);
                 } else {
@@ -310,7 +315,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case VIDEO_PERMISSION_RESULTCODE:
                 if (permissions.length == 2 && grantResults[0] == PackageManager.PERMISSION_GRANTED &&
@@ -355,13 +360,13 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         mWebView.saveState(outState);
     }
 
     @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         mWebView.restoreState(savedInstanceState);
     }
@@ -430,9 +435,23 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
             mMainView.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
             mWebView.getRootView().requestFocus();
             showSnackbar("Blocking keyboard...");
+            assert inputMethodManager != null;
+            assert activity.getCurrentFocus() != null;
             inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
         }
         mSharedPrefs.edit().putBoolean("keyboardEnabled", enable).apply();
+    }
+
+    private void toggleAppbarEnabled() {
+        ActionBar supportActionBar = getSupportActionBar();
+        if (supportActionBar != null) {
+            if (supportActionBar.isShowing()) {
+                showSnackbar("hiding... swipe right to show navigation bar");
+                setAppbarEnabled(false);
+            } else {
+                setAppbarEnabled(true);
+            }
+        }
     }
 
     private void setAppbarEnabled(boolean enable) {
@@ -456,8 +475,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
     }
 
     private void showVersionInfo() {
-        int lastShownVersionCode = 0;
-        int currentVersionCode = 0;
+        int currentVersionCode;
         try {
             PackageInfo pInfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
             currentVersionCode = pInfo.versionCode;
@@ -465,7 +483,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
             Log.e(DEBUG_TAG, "Error checking versioncode", e);
             return;
         }
-        lastShownVersionCode = mSharedPrefs.getInt("lastShownVersionCode", 0);
+        int lastShownVersionCode = mSharedPrefs.getInt("lastShownVersionCode", 0);
         if (lastShownVersionCode == 0) {
             mSharedPrefs.edit().putInt("lastShownVersionCode", currentVersionCode).apply();
             return;
@@ -515,10 +533,9 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setNavigationBarColor(Color.BLACK);
             getWindow().setStatusBarColor(Color.BLACK);
-
-            try {
-                getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.BLACK));
-            } catch (Exception ignored) {
+            ActionBar supportActionBar = getSupportActionBar();
+            if (supportActionBar != null) {
+                supportActionBar.setBackgroundDrawable(new ColorDrawable(Color.BLACK));
             }
         }
 
@@ -541,13 +558,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         int id = item.getItemId();
 
         if (id == R.id.appbar_hide) {
-            MenuItem view = findViewById(R.id.appbar_hide);
-            if (getSupportActionBar().isShowing()) {
-                showSnackbar("hiding... swipe right to show navigation bar");
-                setAppbarEnabled(false);
-            } else {
-                setAppbarEnabled(true);
-            }
+            toggleAppbarEnabled();
         } else if (id == R.id.nav_logout) {
             showSnackbar("logging out...");
             mWebView.loadUrl("javascript:localStorage.clear()");
