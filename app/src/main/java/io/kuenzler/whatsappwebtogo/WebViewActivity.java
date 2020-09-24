@@ -41,6 +41,7 @@ import android.webkit.WebViewClient;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
@@ -111,7 +112,6 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
-        addDarkMode(mWebView);
 
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -162,7 +162,7 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
 
             @Override
             public void onProgressChanged(WebView view, int progress) {
-                addDarkMode(view);
+                updateDarkMode();
             }
 
             @Override
@@ -217,15 +217,6 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         });
 
         mWebView.setWebViewClient(new WebViewClient() {
-
-            public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                super.onPageStarted(view, url, favicon);
-            }
-
-            @Override
-            public void onPageCommitVisible(WebView view, String url) {
-                super.onPageCommitVisible(view, url);
-            }
 
             @Override
             public void onPageFinished(WebView view, String url) {
@@ -466,12 +457,42 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
         }
     }
 
+    private void updateDarkMode() {
+        boolean currentState = mSharedPrefs.getBoolean("darkMode", false);
+        setDarkMode(currentState);
+    }
+
     private void toggleDarkMode() {
         boolean currentState = mSharedPrefs.getBoolean("darkMode", false);
-        mSharedPrefs.edit().putBoolean("darkMode", !currentState).apply();
+        setDarkMode(!currentState);
+    }
 
-        Log.d(DEBUG_TAG, "Dark Mode Enabled: " + !currentState);
-        restartApp();
+    private void setDarkMode(boolean darkMode) {
+        mSharedPrefs.edit().putBoolean("darkMode", darkMode).apply();
+
+        Log.d(DEBUG_TAG, "Dark Mode Enabled: " + darkMode);
+
+        String js;
+        if (darkMode) {
+            js = "javascript:" +
+                    "document.body.classList.remove('light');" +
+                    "document.body.classList.add('dark');";
+        } else {
+            js = "javascript:" +
+                    "document.body.classList.remove('dark');" +
+                    "document.body.classList.add('light');";
+        }
+        mWebView.evaluateJavascript(js, s -> {});
+
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            @ColorInt int c = darkMode ? Color.BLACK : getResources().getColor(R.color.colorPrimary);
+            getWindow().setNavigationBarColor(c);
+            getWindow().setStatusBarColor(c);
+            ActionBar supportActionBar = getSupportActionBar();
+            if (supportActionBar != null) {
+                supportActionBar.setBackgroundDrawable(new ColorDrawable(c));
+            }
+        }
     }
 
     private void showVersionInfo() {
@@ -527,29 +548,6 @@ public class WebViewActivity extends AppCompatActivity implements NavigationView
     private void loadWhatsApp() {
         mWebView.getSettings().setUserAgentString(USER_AGENT);
         mWebView.loadUrl(WHATSAPP_WEB_URL);
-    }
-
-    public void addDarkMode(final WebView mWebView) {
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setNavigationBarColor(Color.BLACK);
-            getWindow().setStatusBarColor(Color.BLACK);
-            ActionBar supportActionBar = getSupportActionBar();
-            if (supportActionBar != null) {
-                supportActionBar.setBackgroundDrawable(new ColorDrawable(Color.BLACK));
-            }
-        }
-
-        if (mWebView != null) {
-            mWebView.loadUrl("javascript:(" +
-                    "function(){ " +
-                    "try {  document.body.classList.add('dark') } catch(err) { }" +
-                    "})()");
-        }
-    }
-
-    private void restartApp() {
-        startActivity(new Intent(getApplicationContext(), MainActivity.class));
-        this.finish();
     }
 
     @Override
